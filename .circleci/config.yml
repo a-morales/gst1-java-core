@@ -2,6 +2,8 @@ version: 2
 
 variables:
   build: &build
+    docker:
+      - image: circleci/openjdk:8-jdk
     steps:
       - run:
           name: "Installing gstreamer"
@@ -22,15 +24,11 @@ variables:
 
 jobs:
   build_base:
-    docker:
-      - image: circleci/openjdk:8
     environment:
       GST_VERSION: 1.8
     <<: *build
 
   build_latest:
-    docker:
-      - image: circleci/openjdk:8
     environment:
       GST_VERSION: 1.14.4
     <<: *build
