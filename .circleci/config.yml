@@ -1,0 +1,44 @@
+version: 2
+
+variables:
+  build: &build
+    steps:
+      - run:
+          name: "Installing gstreamer"
+          command: |
+            curl -L "https://people.freedesktop.org/~slomo/gstreamer-$GST_VERSION.tar.gz | tar xz"
+            sed -i "s;prefix=/root/gstreamer;prefix=$PWD/gstreamer;g" "$PWD/gstreamer/lib/x86_64-linux-gnu/pkgconfig/*.pc"
+            echo "export PKG_CONFIG=$PWD/gstreamer/lib/x86_64-linux-gnu/pkgconfig" >> $BASH_ENV
+            echo "export GST_PLUGIN_SYSTEM_PATH=$PWD/gstreamer/lib/x86_64-linux-gnu/gstreamer-1.0" >> $BASH_ENV
+            echo "export PATH=$PATH:$PWD/gstreamer/bin" >> $BASH_ENV
+      - checkout
+      - restore_cache:
+          key: gst1-java-core-{{ checksum "pom.xml" }}
+      - run: mvn test
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: gst1-java-core-{{ checksum "pom.xml" }}
+
+jobs:
+  build_base:
+    docker:
+      - image: circleci/openjdk:8
+    environment:
+      GST_VERSION: 1.8
+    <<: *build
+
+  build_latest:
+    docker:
+      - image: circleci/openjdk:8
+    environment:
+      GST_VERSION: 1.14.4
+    <<: *build
+
+workflows:
+  version: 2
+
+  test:
+    jobs:
+      - build_base
+      - build_latest
